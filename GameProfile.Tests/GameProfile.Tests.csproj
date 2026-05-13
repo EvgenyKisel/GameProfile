@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <IsPackable>false</IsPackable>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
+        <PackageReference Include="xunit.v3" Version="3.2.2" />
+        <PackageReference Include="xunit.v3.assert" Version="3.2.2" />
+        <PackageReference Include="xunit.v3.common" Version="3.2.2" />
+        <PackageReference Include="xunit.v3.core" Version="3.2.2" />
+        <PackageReference Include="xunit.v3.runner.common" Version="3.2.2" />
+        <PackageReference Include="xunit.v3.runner.inproc.console" Version="3.2.2" />
+        <PackageReference Include="xunit.v3.runner.console" Version="3.2.2">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\GameProfile.Core\GameProfile.Core.csproj" />
+        <ProjectReference Include="..\GameProfile.Api\GameProfile.Api.csproj" />
+        <ProjectReference Include="..\GameProfile.Utils\GameProfile.Utils.csproj" />
+        <ProjectReference Include="..\GameProfile.DataSetup\GameProfile.DataSetup.csproj" />
+        <ProjectReference Include="..\GameProfile.DB\GameProfile.DB.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update=".env">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update=".env.template">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <Content Include="appsettings.staging.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="appsettings.dev.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+</Project>

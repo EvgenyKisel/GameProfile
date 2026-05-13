@@ -1,0 +1,14 @@
+bin/
+obj/
+out/
+*.user
+*.suo
+.vs/
+.idea/
+.vscode/
+.DS_Store
+
+# Local secrets and machine-specific overrides
+GameProfile.Tests/.env
+GameProfile.Tests/appsettings.local.json
+*.log
