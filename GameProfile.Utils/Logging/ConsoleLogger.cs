@@ -2,7 +2,7 @@ using Xunit;
 
 namespace GameProfile.Utils.Logging;
 
-public class ConsoleLogger(ITestContext context) : ILogger
+public class ConsoleLogger(ITestContext context = null) : ILogger
 {
     private readonly ITestContext _testContext = context;
 

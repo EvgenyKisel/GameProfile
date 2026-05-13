@@ -1,25 +1,26 @@
 using System.Net;
 using GameProfile.DataSetup;
 using GameProfile.Tests.Constants;
+using GameProfile.Tests.Fixtures;
 using GameProfile.Tests.Utils;
 using Xunit;
 
 namespace GameProfile.Tests.Tests;
 
 [Trait(TraitName.Category, TestCategory.Players)]
-public class GetAllPlayersTests : BaseTest
+public class GetAllPlayersTests(LoginFixture loginFixture) : BaseTest(loginFixture)
 {
     [Fact]
     public void Player_GetAll_SortedByName_200()
     {
         const int seedCount = 5;
         var createdIds = new List<long>();
-        RollBackAction = DeleteAll(createdIds);
 
         foreach (var player in PlayerDataCreator.CreateRandomPlayers(seedCount))
         {
             var (_, id) = CreatePlayer(player);
             createdIds.Add(id);
+            RollBackAction = DeleteAll(createdIds);
         }
 
         var response = AutomationTaskService.GetAllPlayers();
@@ -40,15 +41,11 @@ public class GetAllPlayersTests : BaseTest
                 .Equal(dbPlayer.Country, apiPlayer.Country, $"GetAll country mismatch for id={dbPlayer.Id}.");
         }
 
-        var sorted = response.Data
-            .OrderBy(p => p.Name, StringComparer.Ordinal)
-            .ToList();
-
         Assertions.Validate()
-            .SortedAscendingByName(sorted, p => p.Name, "Sorted list is not ascending by name.");
+            .SortedAscendingByName(response.Data, p => p.Name, "GetAll response is not ascending by name.");
 
-        Logger.Log($"Sorted players (count={sorted.Count}):");
-        foreach (var p in sorted)
+        Logger.Log($"GetAll players (count={response.Data.Count}):");
+        foreach (var p in response.Data)
         {
             Logger.Log($"  id={p.Id}, name='{p.Name}', age={p.Age}");
         }

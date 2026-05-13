@@ -1,25 +1,26 @@
 using System.Net;
 using GameProfile.DataSetup;
 using GameProfile.Tests.Constants;
+using GameProfile.Tests.Fixtures;
 using GameProfile.Tests.Utils;
 using Xunit;
 
 namespace GameProfile.Tests.Tests;
 
 [Trait(TraitName.Category, TestCategory.Players)]
-public class CreatePlayerTests : BaseTest
+public class CreatePlayerTests(LoginFixture loginFixture) : BaseTest(loginFixture)
 {
     [Fact]
     public void Player_Create_12_201()
     {
         const int playerCount = 12;
         var createdIds = new List<long>();
-        RollBackAction = DeleteAll(createdIds);
 
         foreach (var player in PlayerDataCreator.CreateRandomPlayers(playerCount))
         {
             var (createResponse, createdId) = CreatePlayer(player);
             createdIds.Add(createdId);
+            RollBackAction = DeleteAll(createdIds);
 
             Assertions.Validate()
                 .Equal(HttpStatusCode.Created, createResponse.StatusCode, "Create should return 201.")

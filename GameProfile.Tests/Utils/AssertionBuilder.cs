@@ -77,7 +77,7 @@ public class AssertionBuilder
             Xunit.Assert.NotNull(str);
             Xunit.Assert.NotEmpty(str);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is NotNullException or NotEmptyException)
         {
             throw new XunitException(message ?? $"Expected string to be not null and not empty but was: '{str}'", ex);
         }
@@ -126,14 +126,19 @@ public class AssertionBuilder
         return this;
     }
 
-    public AssertionBuilder SortedAscendingByName<T>(IEnumerable<T> items, Func<T, string> nameSelector, string message = null)
+    public AssertionBuilder SortedAscendingByName<T>(
+        IEnumerable<T> items,
+        Func<T, string> nameSelector,
+        string message = null,
+        StringComparer comparer = null)
     {
+        var cmp = comparer ?? StringComparer.Ordinal;
         var list = items?.ToList() ?? new List<T>();
         for (var i = 1; i < list.Count; i++)
         {
             var prev = nameSelector(list[i - 1]);
             var curr = nameSelector(list[i]);
-            if (string.Compare(prev, curr, StringComparison.Ordinal) > 0)
+            if (cmp.Compare(prev, curr) > 0)
             {
                 throw new XunitException(
                     message ?? $"Not sorted ascending by name at index {i}: '{prev}' > '{curr}'.");

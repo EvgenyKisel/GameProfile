@@ -56,7 +56,7 @@ Straight mapping from the task spec to a test:
 | 4 | List players, verify alphabetical sort | `GetAllPlayersTests.Player_GetAll_SortedByName_200` | `GET /api/automationTask/getAll` |
 | 5 | Delete every created player | `DeletePlayerTests.Player_DeleteAllCreated_200` | `DELETE /api/automationTask/deleteOne/{id}` |
 
-`BaseTest` logs in once per test, stashes the token on `AutomationTaskService`, and exposes two helpers: `CreatePlayer(player)` (creates via API and mirrors into the in-memory DB, returns the response + id) and `DeleteAll(ids)` (returns an `Action` you assign to `RollBackAction` for teardown).
+`BaseTest` subclasses live in a shared `ApiTestCollection`. `LoginFixture` runs once for the whole assembly (via `ICollectionFixture<LoginFixture>`), and each test reuses the same tester token instead of re-authenticating. `BaseTest` exposes two helpers: `CreatePlayer(player)` (creates via API, mirrors into the in-memory DB, returns the response + id) and `DeleteAll(ids)` (returns an `Action` you assign to `RollBackAction` for teardown — it snapshots ids at call time, so it's safe to set before the list is populated).
 
 ## A note on the API shape
 
@@ -66,7 +66,9 @@ The task spec didn't include an OpenAPI doc, so the DTO field names and a few re
 - `BaseRequest.Authorization` — sets `Authorization: <token>` with no `Bearer` prefix. Change the attribute if the API expects `Bearer ` or a custom header.
 - `PlayerResponse` — assumes `id`, `name`, `age`, `gender`, `country`.
 - `GetPlayerRequest` — sends `?id=<id>` as a query parameter. Swap to a path/body param if the real API differs.
-- `AutomationTaskService.DeletePlayer` — asserts `200 OK`. If delete returns `204 No Content`, change the expected status in `ValidateResponse(...)`.
+- `DELETE /api/automationTask/deleteOne/{id}` — tests assert `200 OK`. If the real API returns `204 No Content`, change the expected status in `DeletePlayerTests`.
+- `GET /api/automationTask/getOne` after delete — `DeletePlayerTests` expects `404 Not Found`. If the API returns something else (200 with a tombstone, soft-delete), update the assertion.
+- `GetAll` sort order — `Player_GetAll_SortedByName_200` asserts ordinal ascending. If the API sorts case-insensitively or by locale, pass a different `StringComparer` to `SortedAscendingByName`.
 
 ## Adding an endpoint
 

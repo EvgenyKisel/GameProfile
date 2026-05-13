@@ -10,13 +10,6 @@ public class TesterService(ILogger logger) : BaseService(logger)
 {
     private readonly TesterResourceApi _api = new(logger);
 
-    public RestResponse<LoginResponse> Login(string login, string password)
-    {
-        var request = new LoginRequest
-        {
-            Login = login,
-            Password = password
-        };
-        return ValidateResponse(_api.Login(request));
-    }
+    public RestResponse<LoginResponse> Login(string login, string password) =>
+        _api.Login(new LoginRequest { Login = login, Password = password });
 }

@@ -1,13 +1,14 @@
 using System.Net;
 using GameProfile.DataSetup;
 using GameProfile.Tests.Constants;
+using GameProfile.Tests.Fixtures;
 using GameProfile.Tests.Utils;
 using Xunit;
 
 namespace GameProfile.Tests.Tests;
 
 [Trait(TraitName.Category, TestCategory.Players)]
-public class GetPlayerTests : BaseTest
+public class GetPlayerTests(LoginFixture loginFixture) : BaseTest(loginFixture)
 {
     [Fact]
     public void Player_GetOne_ReturnsCreatedPlayer_200()

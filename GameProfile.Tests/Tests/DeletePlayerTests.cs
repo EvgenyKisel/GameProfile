@@ -1,13 +1,14 @@
 using System.Net;
 using GameProfile.DataSetup;
 using GameProfile.Tests.Constants;
+using GameProfile.Tests.Fixtures;
 using GameProfile.Tests.Utils;
 using Xunit;
 
 namespace GameProfile.Tests.Tests;
 
 [Trait(TraitName.Category, TestCategory.Players)]
-public class DeletePlayerTests : BaseTest
+public class DeletePlayerTests(LoginFixture loginFixture) : BaseTest(loginFixture)
 {
     [Fact]
     public void Player_DeleteAllCreated_200()
@@ -31,7 +32,12 @@ public class DeletePlayerTests : BaseTest
 
             Assertions.Validate()
                 .Equal(HttpStatusCode.OK, deleteResponse.StatusCode, $"Delete status for id {id} should be 200.")
-                .Null(Db.Players.GetById(id), $"DB should no longer contain id {id}.");
+                .Null(Db.Players.GetById(id), $"DB mirror should no longer contain id {id}.");
+
+            var getAfterDelete = AutomationTaskService.GetPlayer(id);
+            Assertions.Validate()
+                .Equal(HttpStatusCode.NotFound, getAfterDelete.StatusCode,
+                    $"GET for deleted id {id} should return 404, got {(int)getAfterDelete.StatusCode}.");
         }
 
         var allAfterDelete = AutomationTaskService.GetAllPlayers();
@@ -42,6 +48,6 @@ public class DeletePlayerTests : BaseTest
 
         Assertions.Validate()
             .Count(leakedIds, 0, $"Deleted ids still in GetAll: [{string.Join(",", leakedIds)}].")
-            .Equal(0, Db.Players.Count, "DB should be empty after all deletes.");
+            .Equal(0, Db.Players.Count, "DB mirror should be empty after all deletes.");
     }
 }

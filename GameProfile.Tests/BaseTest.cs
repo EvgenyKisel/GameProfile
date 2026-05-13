@@ -4,39 +4,32 @@ using GameProfile.Core.Configuration;
 using GameProfile.DataSetup;
 using GameProfile.DB;
 using GameProfile.DB.Models;
+using GameProfile.Tests.Fixtures;
 using GameProfile.Utils.Logging;
 using RestSharp;
 using Xunit;
 
 namespace GameProfile.Tests;
 
+[Collection(nameof(ApiTestCollection))]
 public abstract class BaseTest : IDisposable
 {
     protected readonly ILogger Logger;
-    protected readonly TesterService TesterService;
     protected readonly AutomationTaskService AutomationTaskService;
     protected readonly InMemoryDatabase Db = new();
 
     protected Action RollBackAction { get; set; }
 
-    protected BaseTest()
+    protected BaseTest(LoginFixture loginFixture)
     {
-        var settings = TestSettingsLoader.Settings;
         var testContext = TestContext.Current;
         Logger = new ConsoleLogger(testContext);
         Logger.Log($"Test '{testContext.TestCase?.TestCaseDisplayName}' execution started.");
+
+        var settings = TestSettingsLoader.Settings;
         Logger.Log($"Environment: {settings.Environment}, API base URL: {settings.ApiBaseUrl}");
 
-        TesterService = new TesterService(Logger);
-        AutomationTaskService = new AutomationTaskService(Logger);
-
-        var loginResponse = TesterService.Login(settings.Tester.Login, settings.Tester.Password);
-        AutomationTaskService.Token = loginResponse.Data?.Token;
-
-        if (string.IsNullOrEmpty(AutomationTaskService.Token))
-        {
-            Logger.Log("Warning: login succeeded but no token was returned.");
-        }
+        AutomationTaskService = new AutomationTaskService(Logger) { Token = loginFixture.Token };
     }
 
     protected (RestResponse<PlayerResponse> Response, long Id) CreatePlayer(Player player)
@@ -45,7 +38,8 @@ public abstract class BaseTest : IDisposable
             player.Name, player.Age, player.Gender, player.Country);
 
         var id = response.Data?.Id
-            ?? throw new InvalidOperationException("Create returned no id; cannot continue.");
+            ?? throw new InvalidOperationException(
+                $"CreatePlayer returned no id; status={(int)response.StatusCode} {response.StatusCode}, body: {response.Content}");
 
         Db.Players.Insert(new PlayerRecord
         {
@@ -58,28 +52,32 @@ public abstract class BaseTest : IDisposable
         return (response, id);
     }
 
-    protected Action DeleteAll(IEnumerable<long> ids) => () =>
+    protected Action DeleteAll(IEnumerable<long> ids)
     {
-        foreach (var id in ids)
+        var snapshot = ids?.ToList() ?? new List<long>();
+        return () =>
         {
-            try { AutomationTaskService.DeletePlayer(id); }
-            catch (Exception ex) { Logger.Log($"Cleanup failed for id {id}: {ex.Message}"); }
-        }
-    };
+            foreach (var id in snapshot)
+            {
+                try { AutomationTaskService.DeletePlayer(id); }
+                catch (Exception ex) { Logger.Log($"[ROLLBACK-ERROR] Cleanup failed for id {id}: {ex}"); }
+            }
+        };
+    }
 
     public void Dispose()
     {
         try
         {
-            Logger.Log("==========================================");
-            Logger.Log($"Starting rollback for '{TestContext.Current.TestCase?.TestCaseDisplayName}'.");
+            Logger?.Log("==========================================");
+            Logger?.Log($"Starting rollback for '{TestContext.Current.TestCase?.TestCaseDisplayName}'.");
             RollBackAction?.Invoke();
-            Logger.Log("Rollback completed.");
-            Logger.Log("==========================================");
+            Logger?.Log("Rollback completed.");
+            Logger?.Log("==========================================");
         }
         catch (Exception ex)
         {
-            Logger.Log($"Error while rolling back: {ex.Message}");
+            Logger?.Log($"[ROLLBACK-ERROR] Error while rolling back: {ex}");
         }
     }
 }

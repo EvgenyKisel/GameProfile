@@ -54,10 +54,12 @@ public class HttpClient
         var response = _client.Execute<T>(restRequest);
 
         _logger.Log(DateTime.UtcNow.ToUtcString());
-        _logger.Log($"Response: {(int)response.StatusCode} {response.StatusCode}");
+        _logger.Log($"Response: {(int)response.StatusCode} {response.StatusCode} ({response.ResponseStatus})");
         if (!string.IsNullOrEmpty(response.Content))
             _logger.Log($"Body:\n{response.Content}\n");
-        if (response.ErrorMessage != null)
+        if (response.ErrorException != null)
+            _logger.Log($"Error: {response.ErrorException}");
+        else if (response.ErrorMessage != null)
             _logger.Log($"Error: {response.ErrorMessage}");
 
         return response;

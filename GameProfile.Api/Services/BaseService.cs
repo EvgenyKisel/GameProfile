@@ -1,7 +1,4 @@
-using System.Net;
 using GameProfile.Utils.Logging;
-using RestSharp;
-using Xunit;
 
 namespace GameProfile.Api.Services;
 
@@ -11,13 +8,12 @@ public abstract class BaseService(ILogger logger)
 
     public string Token { get; set; }
 
-    protected string ResolveToken(string explicitToken) => explicitToken ?? Token;
-
-    protected static RestResponse<T> ValidateResponse<T>(
-        RestResponse<T> response,
-        HttpStatusCode expectedStatus = HttpStatusCode.OK)
+    protected string ResolveToken(string explicitToken)
     {
-        Assert.Equal(expectedStatus, response.StatusCode);
-        return response;
+        var token = explicitToken ?? Token;
+        if (string.IsNullOrEmpty(token))
+            throw new InvalidOperationException(
+                "No auth token available. Set Token on the service or pass one explicitly.");
+        return token;
     }
 }
